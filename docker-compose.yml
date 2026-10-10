@@ -1,0 +1,55 @@
+services:
+  mongo:
+    image: mongo:7.0
+    container_name: eventsphere-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mongo-init:
+    image: mongo:7.0
+    container_name: eventsphere-mongo-init
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: "no"
+    command: >
+      bash -c "mongosh --host mongo:27017 --eval '
+        try {
+          const status = rs.status();
+          console.log(\"Replica set rs0 already initialized\");
+        } catch (e) {
+          console.log(\"Initiating replica set rs0 for single-node transaction support...\");
+          rs.initiate({
+            _id: \"rs0\",
+            members: [{ _id: 0, host: \"localhost:27017\" }]
+          });
+          console.log(\"Replica set rs0 initiated successfully.\");
+        }
+      '"
+
+  redis:
+    image: redis:7-alpine
+    container_name: eventsphere-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mongo_data:
+  redis_data:
