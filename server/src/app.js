@@ -4,11 +4,25 @@ import routes from './routes/index.js';
 import { getHealth } from './controllers/healthController.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { isDBReady } from './config/db.js';
+import { config } from './config/env.js';
 
 const app = express();
 
-// Middleware
-app.use(cors());
+// Parse CORS_ORIGIN as comma-separated list; allow requests with no origin (e.g. server-to-server)
+const allowedOrigins = (config.corsOrigin || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+      callback(new Error(`CORS: origin ${origin} not allowed`));
+    },
+    credentials: true
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

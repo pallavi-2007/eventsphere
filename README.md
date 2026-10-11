@@ -128,3 +128,64 @@ EventSphere/
     ├── tailwind.config.js   # Extracted plum, warm cream & sunset gradient tokens
     └── vite.config.js       # Vite proxy setup (/api -> localhost:5000)
 ```
+
+---
+
+## 🚢 Deployment
+
+EventSphere is deployed as two separate services:
+
+| Service | Platform | URL |
+|---------|----------|-----|
+| API Server | [Render](https://render.com) | `https://eventsphere-b9gl.onrender.com` |
+| React Client | [Vercel](https://vercel.com) | Your Vercel project URL |
+
+---
+
+### Server — Render
+
+**Build command**: `npm install`  
+**Start command**: `node src/server.js`  
+**Root directory**: `server/`
+
+Required environment variables (set in Render dashboard → Environment):
+
+| Variable | Description |
+|----------|-------------|
+| `MONGODB_URI` | MongoDB Atlas connection string |
+| `REDIS_URL` | Redis connection URL (Upstash or similar) |
+| `JWT_SECRET` | Long random string for JWT signing |
+| `QR_SECRET` | Separate long random string for QR ticket signing |
+| `CORS_ORIGIN` | Comma-separated allowed frontend origins, e.g. `https://your-app.vercel.app` |
+| `NODE_ENV` | `production` |
+| `JWT_EXPIRES_IN` | Optional — defaults to `7d` |
+
+> The server validates all required variables at startup and exits with a clear error if any are missing.
+
+---
+
+### Client — Vercel
+
+**Framework preset**: Vite  
+**Root directory**: `client/`  
+**Build command**: `npm run build`  
+**Output directory**: `dist/`
+
+Required environment variables (set in Vercel dashboard → Settings → Environment Variables):
+
+| Variable | Description |
+|----------|-------------|
+| `VITE_API_URL` | Your Render server URL, e.g. `https://eventsphere-b9gl.onrender.com` (no trailing slash) |
+
+> `client/vercel.json` includes a rewrite rule so React Router deep links (e.g. `/user/home`) work on refresh.  
+> In local development, `VITE_API_URL` is not needed — Vite proxies `/api` to `http://localhost:5000`.
+
+---
+
+### Seeding Production Data
+
+After deploying the server, run the seed script locally pointing at the production DB:
+
+```bash
+MONGODB_URI=<your-atlas-uri> npm run seed
+```

@@ -49,16 +49,30 @@ export const AuthProvider = ({ children }) => {
       }
       return { success: false, error: 'Failed to authenticate' };
     } catch (err) {
-      const errorMsg = err.response?.data?.error || err.message || 'Login failed';
-      const isWakingUp = err.response?.status === 503 || err.response?.data?.isWakingUp;
-      return { 
-        success: false, 
+      const status = err.response?.status;
+      const isWakingUp = status === 503 || err.response?.data?.isWakingUp;
+
+      // Detect non-JSON body (e.g. HTML 502 from Render / a proxy)
+      const responseData = err.response?.data;
+      const isNonJson =
+        typeof responseData === 'string' && responseData.trim().startsWith('<');
+
+      let errorMsg;
+      if (isNonJson || status === 502 || status === 504) {
+        errorMsg = 'Unable to reach the server. It may be starting up — please try again in a moment.';
+      } else {
+        errorMsg = responseData?.error || err.message || 'Login failed';
+      }
+
+      return {
+        success: false,
         error: errorMsg,
         isWakingUp: !!isWakingUp,
-        status: err.response?.status 
+        status
       };
     }
   };
+
 
   const register = async (name, email, password, role = 'user') => {
     try {

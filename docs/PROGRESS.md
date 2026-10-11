@@ -112,6 +112,20 @@
 - [x] Part 4: `/health` reports database and Redis statuses accurately.
 - [x] Part 5: Automated test suite in `server/src/scripts/testStartup.js` verifying immediate requests never return 500, /health accuracy, and smooth post-connect login ✅
 
+## Deployment Readiness (Completed)
+- [x] Part 1: `server/package.json` "start" script confirmed as `node src/server.js`; server listens on `process.env.PORT` (Render-compatible).
+- [x] Part 2: CORS restricted to `CORS_ORIGIN` env var (comma-separated list); no wildcard with credentials; dynamic origin callback returns 403 for unlisted origins.
+- [x] Part 3: `/health` confirmed unauthenticated and fast (no DB query, just status flags from in-memory state).
+- [x] Part 4: `server/src/config/env.js` validates `MONGODB_URI`, `JWT_SECRET`, `QR_SECRET`, `REDIS_URL` at startup and calls `process.exit(1)` with clear error if any are missing. Hardcoded secret fallbacks removed.
+- [x] Part 5: No secrets logged (DB connector logs only host/dbname; env.js does not log config values).
+- [x] Part 6: `client/src/services/api.js` reads `VITE_API_URL` to set Axios base URL in production; falls back to `/api` (Vite proxy) in development. Trailing-slash safe.
+- [x] Part 7: `client/src/components/ErrorBoundary.jsx` added; wraps entire React tree in `client/src/main.jsx`. `AuthContext.login()` hardened against non-JSON responses (HTML 502/504 from Render cold start).
+- [x] Part 8: `client/vercel.json` added — SPA rewrite sends all non-API routes to `index.html` so React Router deep links work on refresh.
+- [x] Part 9: `client/.env.example` and `server/.env.example` updated with placeholder values only (no real secrets).
+- [x] Part 10: Deployment section added to `README.md` covering Render (server) and Vercel (client) setup.
+- [x] Part 11: `npm run build` → exit 0, 2099 modules transformed ✅
+
+
 
 
 
