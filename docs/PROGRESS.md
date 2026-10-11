@@ -105,6 +105,14 @@
 - [x] Backend 1 & 2: `PATCH /api/auth/me` updating only user's name with trimmed 2-50 character validation (email, role, password immutable). `GET /api/profile/summary` returning real metrics (`totalTickets`, `upcomingEvents`, `totalSpent`, `favoritesCount`). Automated test suite (`server/src/scripts/testProfile.js`) passed (4/4 tests) ✅
 - [x] Frontend 3-7: Profile page (`client/src/pages/UserProfile.jsx`) with avatar initial circle, user metadata, role badge, member since date; four real stat cards (Tickets Booked, Upcoming Events, Total Spent, Favorites); inline name editing with validation and instant context update everywhere without page reload; quick links to My Tickets and Favorites; and Logout button.
 
+## Robustness & Startup Fix (Completed)
+- [x] Part 1: Server connect-before-listen sequence in `server/src/server.js`: connects to MongoDB first via `await connectDB()`, then launches `app.listen()`.
+- [x] Part 2: Mongoose connection retry loop (3 attempts with 1500ms delay) and explicit 5000ms timeouts in `server/src/config/db.js` with progress logging.
+- [x] Part 3: Readiness guard middleware in `server/src/app.js` and `errorHandler.js` returning 503 Service Unavailable ("Server is waking up, please retry.") when database is not ready instead of 500. Login page UI shows friendly warning with an instant Retry button.
+- [x] Part 4: `/health` reports database and Redis statuses accurately.
+- [x] Part 5: Automated test suite in `server/src/scripts/testStartup.js` verifying immediate requests never return 500, /health accuracy, and smooth post-connect login ✅
+
+
 
 
 

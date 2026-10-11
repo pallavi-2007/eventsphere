@@ -3,6 +3,7 @@ import cors from 'cors';
 import routes from './routes/index.js';
 import { getHealth } from './controllers/healthController.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { isDBReady } from './config/db.js';
 
 const app = express();
 
@@ -11,8 +12,20 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Top-level /health endpoint (as specified: /health endpoint)
+// Top-level /health endpoint (always accessible to report status accurately)
 app.get('/health', getHealth);
+
+// Database readiness middleware for API routes: return 503 if DB is not ready
+app.use('/api', (req, res, next) => {
+  if (!isDBReady()) {
+    return res.status(503).json({
+      success: false,
+      isWakingUp: true,
+      error: 'Server is waking up, please retry.'
+    });
+  }
+  next();
+});
 
 // API routes
 app.use('/api', routes);

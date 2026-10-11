@@ -43,7 +43,10 @@ export const getRedisStatus = () => {
   if (!config.redisUrl) {
     return 'not configured';
   }
-  return isRedisConnected ? 'connected' : 'disconnected';
+  if (!redisClient) {
+    return 'disconnected';
+  }
+  return redisClient.status === 'ready' || redisClient.status === 'connect' ? 'connected' : 'disconnected';
 };
 
 export { redisClient };

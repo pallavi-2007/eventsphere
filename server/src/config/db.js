@@ -11,25 +11,39 @@ export const isConfiguredUri = (uri) => {
   return true;
 };
 
-export const connectDB = async () => {
-  if (isConnected) {
-    return;
+export const connectDB = async (retries = 3, delayMs = 1500) => {
+  if (isConnected || mongoose.connection.readyState === 1) {
+    isConnected = true;
+    return true;
   }
 
   if (!isConfiguredUri(config.mongoUri)) {
     console.warn('[Database] MONGODB_URI is not configured in server/.env (contains placeholders or is empty). Database connection is pending user configuration.');
-    return;
+    return false;
   }
 
-  try {
-    const conn = await mongoose.connect(config.mongoUri, {
-      serverSelectionTimeoutMS: 5000,
-    });
-    isConnected = true;
-    console.log(`[Database] MongoDB Connected: ${conn.connection.host}/${conn.connection.name}`);
-  } catch (err) {
-    console.error(`[Database Error] MongoDB connection failed: ${err.message}`);
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      console.log(`[Database] Connecting to MongoDB (attempt ${attempt}/${retries})...`);
+      const conn = await mongoose.connect(config.mongoUri, {
+        serverSelectionTimeoutMS: 5000,
+        connectTimeoutMS: 5000
+      });
+      isConnected = true;
+      console.log(`[Database] MongoDB Connected: ${conn.connection.host}/${conn.connection.name}`);
+      return true;
+    } catch (err) {
+      isConnected = false;
+      console.error(`[Database Error] Connection attempt ${attempt} failed: ${err.message}`);
+      if (attempt < retries) {
+        console.log(`[Database] Retrying connection in ${delayMs}ms...`);
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
   }
+
+  console.error('[Database Error] All initial MongoDB connection attempts failed.');
+  return false;
 };
 
 mongoose.connection.on('disconnected', () => {
@@ -37,10 +51,21 @@ mongoose.connection.on('disconnected', () => {
   console.warn('[Database] MongoDB disconnected');
 });
 
+mongoose.connection.on('connected', () => {
+  isConnected = true;
+});
+
 export const getDBStatus = () => {
   if (!isConfiguredUri(config.mongoUri)) {
     return 'not configured';
   }
-  const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
-  return states[mongoose.connection.readyState] || 'unknown';
+  const state = mongoose.connection.readyState;
+  if (state === 1) return 'connected';
+  if (state === 2) return 'connecting';
+  if (state === 3) return 'disconnecting';
+  return 'disconnected';
+};
+
+export const isDBReady = () => {
+  return mongoose.connection.readyState === 1;
 };

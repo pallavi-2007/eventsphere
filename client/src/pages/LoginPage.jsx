@@ -37,6 +37,7 @@ export const LoginPage = () => {
 
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isWakingUp, setIsWakingUp] = useState(false);
 
   // Demo accounts map
   const demoRoleConfig = {
@@ -71,12 +72,14 @@ export const LoginPage = () => {
     setEmail(demoRoleConfig[roleKey].email);
     setPassword(demoRoleConfig[roleKey].password);
     setErrorMessage('');
+    setIsWakingUp(false);
   };
 
   const handleLoginSubmit = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     setLoading(true);
     setErrorMessage('');
+    setIsWakingUp(false);
 
     const res = await login(email, password);
     setLoading(false);
@@ -92,13 +95,15 @@ export const LoginPage = () => {
       }
     } else {
       setErrorMessage(res.error || 'Authentication failed. Please verify credentials.');
+      setIsWakingUp(!!res.isWakingUp);
     }
   };
 
   const handleSignUpSubmit = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     setLoading(true);
     setErrorMessage('');
+    setIsWakingUp(false);
 
     const res = await register(signupName, signupEmail, signupPassword, 'user');
     setLoading(false);
@@ -107,6 +112,7 @@ export const LoginPage = () => {
       navigate('/user/home');
     } else {
       setErrorMessage(res.error || 'Registration failed.');
+      setIsWakingUp(!!res.isWakingUp);
     }
   };
 
@@ -220,9 +226,29 @@ export const LoginPage = () => {
           </div>
 
           {errorMessage && (
-            <div className="mb-5 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-              <span>{errorMessage}</span>
+            <div className={`mb-5 p-3.5 rounded-2xl border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+              isWakingUp || errorMessage.includes('waking up')
+                ? 'bg-amber-50 border-amber-200 text-amber-900'
+                : 'bg-rose-50 border-rose-200 text-rose-800'
+            }`}>
+              <div className="flex items-center gap-2">
+                <AlertCircle className={`w-4 h-4 shrink-0 ${
+                  isWakingUp || errorMessage.includes('waking up') ? 'text-amber-600' : 'text-rose-600'
+                }`} />
+                <span className="font-medium">{errorMessage}</span>
+              </div>
+              <button
+                type="button"
+                onClick={isSignUp ? handleSignUpSubmit : handleLoginSubmit}
+                disabled={loading}
+                className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-xs transition shadow-sm self-start sm:self-auto shrink-0 ${
+                  isWakingUp || errorMessage.includes('waking up')
+                    ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                    : 'bg-rose-600 hover:bg-rose-700 text-white'
+                }`}
+              >
+                <span>Retry</span>
+              </button>
             </div>
           )}
 

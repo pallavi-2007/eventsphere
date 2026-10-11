@@ -37,6 +37,18 @@ export const errorHandler = (err, req, res, next) => {
     return res.status(401).json({ success: false, error: 'Authentication token expired.' });
   }
 
+  // Mongoose buffering timeout / connection error during startup
+  if (
+    err.name === 'MongooseError' &&
+    (err.message.includes('buffering timed out') || err.message.includes('before initial connection'))
+  ) {
+    return res.status(503).json({
+      success: false,
+      isWakingUp: true,
+      error: 'Server is waking up, please retry.'
+    });
+  }
+
   res.status(error.statusCode || 500).json({
     success: false,
     error: error.message || 'Server Error'

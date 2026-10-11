@@ -50,7 +50,13 @@ export const AuthProvider = ({ children }) => {
       return { success: false, error: 'Failed to authenticate' };
     } catch (err) {
       const errorMsg = err.response?.data?.error || err.message || 'Login failed';
-      return { success: false, error: errorMsg };
+      const isWakingUp = err.response?.status === 503 || err.response?.data?.isWakingUp;
+      return { 
+        success: false, 
+        error: errorMsg,
+        isWakingUp: !!isWakingUp,
+        status: err.response?.status 
+      };
     }
   };
 

@@ -4,9 +4,10 @@ import { getRedisStatus } from '../config/redis.js';
 export const getHealth = (req, res) => {
   const dbStatus = getDBStatus();
   const redisStatus = getRedisStatus();
+  const isHealthy = dbStatus === 'connected';
 
-  res.status(200).json({
-    status: 'healthy',
+  res.status(isHealthy ? 200 : 503).json({
+    status: isHealthy ? 'healthy' : 'degraded',
     timestamp: new Date().toISOString(),
     uptimeSeconds: Math.floor(process.uptime()),
     services: {

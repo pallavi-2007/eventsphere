@@ -3,7 +3,11 @@ import { config } from './config/env.js';
 import { connectDB } from './config/db.js';
 
 const startServer = async () => {
-  // Start server listening
+  // Connect to database first before listening
+  console.log('[Server] Connecting to database before accepting requests...');
+  await connectDB(3, 1500);
+
+  // Start server listening after DB connection is attempted
   const server = app.listen(config.port, () => {
     console.log(`===============================================`);
     console.log(`  EventSphere API Server running on port ${config.port}`);
@@ -11,9 +15,6 @@ const startServer = async () => {
     console.log(`  Health Check: http://localhost:${config.port}/health`);
     console.log(`===============================================`);
   });
-
-  // Connect to database
-  connectDB();
 
   const handleShutdown = () => {
     console.log('\n[Server] Shutting down gracefully...');
